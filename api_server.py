@@ -29,14 +29,26 @@ async def analyze_video(file: UploadFile = File(...)):
     video_path = os.path.join(UPLOAD_DIR, f"{job_id}{video_ext}")
 
     try:
+        # 1.5 Kiểm tra môi trường (Diagnostics for HF Logs)
+        print(f"DEBUG: WORKDIR: {os.getcwd()}")
+        print(f"DEBUG: Files in root: {os.listdir('.')}")
+        if os.path.exists('models'):
+            print(f"DEBUG: Models in folder: {os.listdir('models')}")
+        else:
+            print("ERROR: 'models' folder NOT FOUND")
+
         # 2. Lưu video tạm thời
         with open(video_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
+            
+        print(f"DEBUG: Video saved to {video_path} ({os.path.getsize(video_path)} bytes)")
 
         # 3. Chạy Pipeline phân tích
         base_path = os.path.dirname(os.path.abspath(__file__))
         main_py_path = os.path.join(base_path, "main.py")
         video_abs_path = os.path.abspath(video_path)
+        
+        print(f"DEBUG: Running pipeline: {sys.executable} {main_py_path} {video_abs_path}")
         
         process = subprocess.run(
             [sys.executable, main_py_path, video_abs_path],
@@ -45,7 +57,12 @@ async def analyze_video(file: UploadFile = File(...)):
             encoding="utf-8"
         )
         
+        # Log output for HF Logs
+        if process.stdout: print(f"PIPELINE STDOUT: {process.stdout}")
+        if process.stderr: print(f"PIPELINE STDERR: {process.stderr}")
+
         if process.returncode != 0:
+            print(f"ERROR: Pipeline failed with code {process.returncode}")
             raise HTTPException(status_code=500, detail=f"Pipeline Error: {process.stderr}")
 
         # 4. Đọc kết quả Master JSON
@@ -54,23 +71,23 @@ async def analyze_video(file: UploadFile = File(...)):
         master_json_path = os.path.join(job_output_dir, "master_data.json")
         
         if not os.path.exists(master_json_path):
+            print(f"ERROR: {master_json_path} not found")
             raise HTTPException(status_code=500, detail="Không tìm thấy master_data.json.")
 
         with open(master_json_path, 'r', encoding='utf-8') as f:
             master_report = json.load(f)
 
-        # 5. DỌN DẸP TUYỆT ĐỐI NGAY LẬP TỨC (Không lưu lại bất cứ gì)
+        # 5. DỌN DẸP TUYỆT ĐỐI NGAY LẬP TỨC
         shutil.rmtree(job_output_dir, ignore_errors=True)
         if os.path.exists(video_path): os.remove(video_path)
         
-        # Xóa các file rác khác trong uploads nếu có
-        # (Chỉ xóa file của chính job này để đảm bảo concurrency)
-        
-        # Trả về JSON Data trực tiếp (Browser sẽ nhận được text/json)
         return master_report
 
     except Exception as e:
-        # Cleanup nếu có lỗi
+        import traceback
+        print(f"CRITICAL ERROR: {str(e)}")
+        traceback.print_exc()
+        
         if os.path.exists(video_path): os.remove(video_path)
         video_id = os.path.splitext(os.path.basename(video_path))[0]
         shutil.rmtree(os.path.join(OUTPUT_DIR, video_id), ignore_errors=True)
