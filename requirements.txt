@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+python-multipart
+torch
+torchvision
+opencv-python
+mediapipe==0.10.11
+numpy
+pillow
+tqdm
+jinja2
