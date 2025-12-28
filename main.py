@@ -82,7 +82,18 @@ def analyze_video_fast(video_path, production=True, output_file=None, output_bas
             with open(output_file, 'w', encoding='utf-8') as f:
                 json.dump(master_data, f, indent=4, ensure_ascii=False)
             if not production:
-                print(f"\n✅ Kết quả đã lưu tại: {output_file}")
+                print(f"\nKết quả đã lưu tại: {output_file}")
+            
+            # CLI mode: Tự động tạo video có overlay
+            if not production:
+                try:
+                    from reengineer import reengineer_video
+                    output_video = os.path.join(os.path.dirname(output_file), 'analyzed_video.mp4')
+                    print(f"\nĐang tạo video có overlay...")
+                    reengineer_video(output_file, video_path, output_video)
+                    print(f"Video đã lưu tại: {output_video}")
+                except Exception as e:
+                    print(f"WARNING: Không thể tạo video overlay: {e}")
         
         # Cleanup ONLY nếu không phải CLI mode (API mode)
         if not output_file:
