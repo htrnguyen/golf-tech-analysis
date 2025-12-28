@@ -4,7 +4,6 @@ sys.stdout.reconfigure(encoding="utf-8")
 import json
 import shutil
 
-# Direct imports instead of subprocess
 sys.path.insert(0, os.path.abspath('.'))
 from extract import run_ai_extraction
 from analyze import GolfDiagnosticEngine
@@ -33,21 +32,20 @@ def analyze_video_fast(video_path, production=True, output_file=None, output_bas
         print(f"Analyzing: {video_name}")
     
     try:
-        # Step 1: AI Extraction (optimized - skip slow video but KEEP phase images for analysis)
         extraction_result = run_ai_extraction(
             video_path, 
             slow_factor=1.0, 
             output_dir=output_dir,
-            skip_slow_video=True,  # Bỏ tạo slow-motion  
-            skip_phase_images=False,  # CẦN ảnh phases để analyze.py phân tích
-            return_dict=True,  # NEW: Return dict thay vì ghi file
-            production=production  # Tắt logs khi production=True
+            skip_slow_video=True,
+            skip_phase_images=False,
+            return_dict=True,
+            production=production
         )
         
         if not extraction_result:
             raise Exception("Extraction failed")
         
-        # Step 2: Analyze poses
+
         engine = GolfDiagnosticEngine()
         analysis_result = engine.process_video_results(
             output_dir,

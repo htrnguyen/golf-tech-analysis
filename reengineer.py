@@ -113,12 +113,30 @@ def reengineer_video(json_path, video_path, output_path=None, production=False):
     idx_to_phase = {int(v): k for k, v in event_frames.items()}
     current_phase = "1_Address"
     
-    # Tính toán font size động (Tỉ lệ với chiều cao video)
-    base_font_size = max(18, int(vh / 25))
-    small_font_size = int(base_font_size * 0.7)
-    title_font_size = int(base_font_size * 1.2)
-    line_spacing = int(base_font_size * 1.5)
-    margin = int(vw * 0.05)
+    # Tính toán scaling factor dựa trên resolution
+    # Baseline: 720p (1280x720)
+    baseline_height = 720
+    scale_factor = vh / baseline_height
+    
+    # Xử lý đặc biệt cho video rất nhỏ (< 240p)
+    if vh < 240:
+        # Video cực nhỏ - giảm mạnh font size (chữ nhỏ vẫn OK)
+        base_font_size = max(6, int(10 * scale_factor))
+        small_font_size = max(5, int(8 * scale_factor))
+        title_font_size = max(7, int(12 * scale_factor))
+    else:
+        # Video bình thường
+        base_font_size = max(12, int(20 * scale_factor))
+        small_font_size = max(9, int(14 * scale_factor))
+        title_font_size = max(14, int(24 * scale_factor))
+    
+    # Layout dimensions
+    line_spacing = int(base_font_size * 1.8)
+    margin = max(3, int(vw * 0.02))
+    
+    # Skeleton thickness - thinner for small videos
+    skeleton_line_thickness = max(1, int(2 * scale_factor))
+    skeleton_joint_radius = max(1, int(3 * scale_factor))
 
     frame_idx = 0
     while True:
@@ -144,7 +162,7 @@ def reengineer_video(json_path, video_path, output_path=None, production=False):
                         if l1["visibility"] > 0.5 and l2["visibility"] > 0.5:
                             p1 = (int(l1["x"] * vw), int(l1["y"] * vh))
                             p2 = (int(l2["x"] * vw), int(l2["y"] * vh))
-                            cv2.line(pause_frame, p1, p2, (0, 255, 157), 2)
+                            cv2.line(pause_frame, p1, p2, (0, 255, 157), skeleton_line_thickness)
                 
                 # Joints (Ultra-sleek dots)
                 # 1. Xử lý khuôn mặt: 1 chấm mũi + 1 viền tròn đầu
@@ -171,15 +189,24 @@ def reengineer_video(json_path, video_path, output_path=None, production=False):
                             continue
                         
                         p = (int(lm["x"] * vw), int(lm["y"] * vh))
-                        # Các khớp thân mình mỏng và nhỏ (Radius: 2)
-                        cv2.circle(pause_frame, p, 2, (255, 255, 255), -1)
-                        cv2.circle(pause_frame, p, 3, (0, 255, 157), 1)
+                        # Các khớp thân mình scale theo video size
+                        cv2.circle(pause_frame, p, skeleton_joint_radius, (255, 255, 255), -1)
+                        cv2.circle(pause_frame, p, skeleton_joint_radius + 1, (0, 255, 157), 1)
 
             # --- VẼ BẢNG THÔNG TIN (GLASS OVERLAY - TOP LEFT) ---
-            # Chuyển bảng thông tin lên góc trên bên trái
-            panel_w = int(vw * 0.45)
-            panel_h = int(vh * 0.35)
-            panel_margin = 10
+            # Panel size tự động scale theo video
+            if vh < 240:
+                # Video nhỏ - panel chiếm nhiều không gian hơn, text compact
+                panel_w = int(vw * 0.85)
+                panel_h = int(vh * 0.6)
+                text_padding = 5
+            else:
+                # Video bình thường
+                panel_w = int(vw * 0.45)
+                panel_h = int(vh * 0.35)
+                text_padding = 20
+            
+            panel_margin = max(3, int(vw * 0.01))
             
             # Vẽ panel mờ ở góc trên trái
             pause_frame = draw_glass_panel(pause_frame, (panel_margin, panel_margin), 
@@ -188,9 +215,9 @@ def reengineer_video(json_path, video_path, output_path=None, production=False):
             phase_display_parts = current_phase.split('_', 1)
             phase_display_name = phase_display_parts[1].upper() if len(phase_display_parts) > 1 else current_phase.upper()
             
-            # Text nội dung
-            text_x = panel_margin + 20
-            text_y = panel_margin + 40
+            # Text nội dung - sử dụng text_padding thay vì hardcode
+            text_x = panel_margin + text_padding
+            text_y = panel_margin + int(title_font_size * 1.5)
             
             # Title
             pause_frame = draw_vietnamese_text(pause_frame, f"GIAI ĐOẠN: {phase_display_name}", 
