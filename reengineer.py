@@ -32,24 +32,24 @@ def draw_vietnamese_text(img_cv, text, position, font_size=24, color=(255, 255, 
     img_pil = Image.fromarray(cv2.cvtColor(img_cv, cv2.COLOR_BGR2RGB))
     draw = ImageDraw.Draw(img_pil)
     
+    # Hardcode font path
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    font_path = os.path.join(script_dir, "font", "ARIAL.TTF")
+    
     try:
-        # Sử dụng font Arial mặc định (Tìm trong thư mục dự án hoặc hệ thống)
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-        font_path = os.path.join(base_dir, 'font', 'arial.ttf')
-        if not os.path.exists(font_path):
-            font_path = "C:\\Windows\\Fonts\\arial.ttf"
-        
         font = ImageFont.truetype(font_path, font_size)
     except:
         font = ImageFont.load_default()
     
     if max_width:
-        avg_char_width = font_size * 0.5 
-        chars_per_line = int(max_width / avg_char_width)
-        wrapped_lines = textwrap.wrap(text, width=chars_per_line)
-        text = "\n".join(wrapped_lines)
-        
-    draw.text(position, text, font=font, fill=color, spacing=6)
+        lines = textwrap.wrap(text, width=max_width)
+        y = position[1]
+        for line in lines:
+            draw.text((position[0], y), line, font=font, fill=color)
+            y += font_size + 5
+    else:
+        draw.text(position, text, font=font, fill=color)
+    
     return cv2.cvtColor(np.array(img_pil), cv2.COLOR_RGB2BGR)
 
 def draw_glass_panel(img, pt1, pt2, color=(0, 0, 0), alpha=0.5):
