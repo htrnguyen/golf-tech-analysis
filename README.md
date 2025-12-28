@@ -1,3 +1,12 @@
+---
+title: Golf Tech Analysis
+emoji: 🏌️
+colorFrom: green
+colorTo: blue
+sdk: docker
+pinned: false
+---
+
 # 🏌️ Golf Tech Analysis
 
 Phân tích kỹ thuật golf swing bằng AI - Tự động nhận diện 8 giai đoạn, chấm điểm và đưa ra coaching.
