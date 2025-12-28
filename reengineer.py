@@ -113,30 +113,29 @@ def reengineer_video(json_path, video_path, output_path=None, production=False):
     idx_to_phase = {int(v): k for k, v in event_frames.items()}
     current_phase = "1_Address"
     
-    # Tính toán scaling factor dựa trên resolution
-    # Baseline: 720p (1280x720)
+    # Scaling: giữ nguyên ban đầu cho video bình thường, chỉ giảm cho video cực nhỏ
     baseline_height = 720
-    scale_factor = vh / baseline_height
+    scale = vh / baseline_height
     
-    # Xử lý đặc biệt cho video rất nhỏ (< 240p)
+    # Font sizes
     if vh < 240:
-        # Video cực nhỏ - giảm mạnh font size (chữ nhỏ vẫn OK)
-        base_font_size = max(6, int(10 * scale_factor))
-        small_font_size = max(5, int(8 * scale_factor))
-        title_font_size = max(7, int(12 * scale_factor))
+        # Video cực nhỏ - giảm mạnh
+        base_font_size = max(6, int(10 * scale))
+        small_font_size = max(5, int(8 * scale))
+        title_font_size = max(7, int(12 * scale))
     else:
-        # Video bình thường
-        base_font_size = max(12, int(20 * scale_factor))
-        small_font_size = max(9, int(14 * scale_factor))
-        title_font_size = max(14, int(24 * scale_factor))
+        # Video bình thường - giữ nguyên kích thước lớn
+        base_font_size = max(18, int(vh / 25))
+        small_font_size = int(base_font_size * 0.7)
+        title_font_size = int(base_font_size * 1.2)
     
-    # Layout dimensions
+    # Layout
     line_spacing = int(base_font_size * 1.8)
-    margin = max(3, int(vw * 0.02))
+    margin = int(vw * 0.02)
     
-    # Skeleton thickness - thinner for small videos
-    skeleton_line_thickness = max(1, int(2 * scale_factor))
-    skeleton_joint_radius = max(1, int(3 * scale_factor))
+    # Skeleton
+    skeleton_line_thickness = max(1, int(2 * scale))
+    skeleton_joint_radius = max(1, int(3 * scale))
 
     frame_idx = 0
     while True:
@@ -193,20 +192,19 @@ def reengineer_video(json_path, video_path, output_path=None, production=False):
                         cv2.circle(pause_frame, p, skeleton_joint_radius, (255, 255, 255), -1)
                         cv2.circle(pause_frame, p, skeleton_joint_radius + 1, (0, 255, 157), 1)
 
-            # --- VẼ BẢNG THÔNG TIN (GLASS OVERLAY - TOP LEFT) ---
-            # Panel size tự động scale theo video
+            # Panel size
             if vh < 240:
-                # Video nhỏ - panel chiếm nhiều không gian hơn, text compact
+                # Video nhỏ - panel lớn hơn
                 panel_w = int(vw * 0.85)
                 panel_h = int(vh * 0.6)
                 text_padding = 5
+                panel_margin = 3
             else:
-                # Video bình thường
+                # Video bình thường - giữ nguyên
                 panel_w = int(vw * 0.45)
                 panel_h = int(vh * 0.35)
                 text_padding = 20
-            
-            panel_margin = max(3, int(vw * 0.01))
+                panel_margin = 10
             
             # Vẽ panel mờ ở góc trên trái
             pause_frame = draw_glass_panel(pause_frame, (panel_margin, panel_margin), 
