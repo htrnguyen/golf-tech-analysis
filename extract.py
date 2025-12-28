@@ -25,7 +25,7 @@ def smooth_probs(probs, window_size=5):
     # Chia lại để tổng xác suất mỗi frame = 1
     return smoothed / smoothed.sum(axis=1, keepdims=True)
 
-def run_ai_extraction(video_path, slow_factor=1.0, output_dir=None):
+def run_ai_extraction(video_path, slow_factor=1.0, output_dir=None, skip_slow_video=False, skip_phase_images=False, return_dict=False):
     if not os.path.exists(video_path):
         print(f"Lỗi: Không tìm thấy file {video_path}")
         return
@@ -43,8 +43,11 @@ def run_ai_extraction(video_path, slow_factor=1.0, output_dir=None):
     # Thêm số thứ tự để đảm bảo sắp xếp đúng trong thư mục
     labels = ['1_Address', '2_Toe-up', '3_Mid-Backswing', '4_Top', 
               '5_Mid-Downswing', '6_Impact', '7_Mid-Follow-Through', '8_Finish']
-    for label in labels: 
-        os.makedirs(os.path.join(phases_dir, label), exist_ok=True)
+    
+    # Chỉ tạo thư mục phases nếu cần lưu ảnh
+    if not skip_phase_images:
+        for label in labels: 
+            os.makedirs(os.path.join(phases_dir, label), exist_ok=True)
         
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = EventDetector(pretrain=False, width_mult=1., lstm_layers=1, lstm_hidden=256, bidirectional=True, dropout=False)
@@ -84,24 +87,25 @@ def run_ai_extraction(video_path, slow_factor=1.0, output_dir=None):
         interpolated_full_res.append(raw_frames[-1])
         full_res_frames = interpolated_full_res
         
-        # Lưu file video slow-motion vật lý
-        slow_video_path = os.path.join(output_dir, "slow_motion.mp4")
-        print(f"Đang ghi file slow motion: {slow_video_path}")
-        
-        # Lấy lại FPS gốc (hoặc mặc định 30)
-        cap = cv2.VideoCapture(video_path)
-        fps = cap.get(cv2.CAP_PROP_FPS)
-        cap.release()
-        if fps <= 0: fps = 30
-        
-        h, w = full_res_frames[0].shape[:2]
-        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-        out = cv2.VideoWriter(slow_video_path, fourcc, fps, (w, h))
-        
-        for frame in full_res_frames:
-            out.write(frame)
-        out.release()
-        print(f"Đã tạo video slow motion: {slow_video_path}")
+        # Lưu file video slow-motion vật lý (optional)
+        if not skip_slow_video:
+            slow_video_path = os.path.join(output_dir, "slow_motion.mp4")
+            print(f"Đang ghi file slow motion: {slow_video_path}")
+            
+            # Lấy lại FPS gốc (hoặc mặc định 30)
+            cap = cv2.VideoCapture(video_path)
+            fps = cap.get(cv2.CAP_PROP_FPS)
+            cap.release()
+            if fps <= 0: fps = 30
+            
+            h, w = full_res_frames[0].shape[:2]
+            fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+            out = cv2.VideoWriter(slow_video_path, fourcc, fps, (w, h))
+            
+            for frame in full_res_frames:
+                out.write(frame)
+            out.release()
+            print(f"Đã tạo video slow motion: {slow_video_path}")
         
     else:
         full_res_frames = raw_frames
@@ -186,7 +190,9 @@ def run_ai_extraction(video_path, slow_factor=1.0, output_dir=None):
         event_metadata = {}
         for i, frame_idx in enumerate(events):
             if frame_idx < len(full_res_frames):
-                cv2.imwrite(os.path.join(phases_dir, labels[i], f"{video_prefix}.jpg"), full_res_frames[frame_idx])
+                # Chỉ lưu ảnh nếu không skip
+                if not skip_phase_images:
+                    cv2.imwrite(os.path.join(phases_dir, labels[i], f"{video_prefix}.jpg"), full_res_frames[frame_idx])
                 event_metadata[labels[i]] = int(frame_idx)
         
         # Lấy FPS để đồng bộ phía frontend
@@ -195,11 +201,18 @@ def run_ai_extraction(video_path, slow_factor=1.0, output_dir=None):
         cap.release()
         if fps <= 0: fps = 30
 
-        metadata_path = os.path.join(output_dir, "metadata.json")
-        with open(metadata_path, 'w') as f:
-            json.dump({"event_frames": event_metadata, "slow_factor": slow_factor, "fps": fps}, f)
-    
-    print(f"Xong! Ảnh trích xuất lưu tại {phases_dir}")
+        metadata = {"event_frames": event_metadata, "slow_factor": slow_factor, "fps": fps}
+        
+        # Return dict nếu cần, hoặc ghi file (legacy)
+        if return_dict:
+            print("Extraction complete (dict mode)")
+            return {"metadata": metadata}
+        else:
+            metadata_path = os.path.join(output_dir, "metadata.json")
+            with open(metadata_path, 'w') as f:
+                json.dump(metadata, f)
+            print(f"Xong! Ảnh trích xuất lưu tại {phases_dir}")
+            return metadata
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

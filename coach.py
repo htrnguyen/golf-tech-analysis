@@ -85,6 +85,84 @@ class GolfCoachEngine:
             summary += f"Lỗi ưu tiên cần sửa: {fault_text}."
         return summary
 
+def generate_coaching_report_from_dict(analysis_dict):
+    """
+    Direct coaching report generation from analysis dict (optimized).
+    
+    Args:
+        analysis_dict: Analysis result dictionary
+    
+    Returns:
+        dict: Coaching report
+    """
+    coach = GolfCoachEngine()
+    
+    # Bypass file I/O - use dict directly
+    phases = analysis_dict.get("phases", {})
+    weighted_score = 0
+    all_comments = []
+    drills = set()
+    
+    # Tính toán điểm có trọng số
+    for phase, analysis in phases.items():
+        score = analysis.get("score", 0)
+        weight = coach.weights.get(phase, 0.1)
+        weighted_score += score * weight
+        
+        # Thu thập nhận xét và drills
+        for comment in analysis.get("comments", []):
+            all_comments.append(f"[{phase}] {comment}")
+            if comment in coach.drill_library:
+                drills.add(coach.drill_library[comment])
+
+    # Phân loại trình độ
+    score = round(weighted_score, 1)
+    if score >= 9.0: level = "Professional / Low Handicap"
+    elif score >= 7.5: level = "Mid Handicap"
+    elif score >= 5.5: level = "High Handicap"
+    else: level = "Beginner"
+
+    final_report = {
+        "video_id": analysis_dict.get("video_id"),
+        "final_score": score,
+        "skill_level": level,
+        "key_faults": all_comments,
+        "recommended_drills": list(drills),
+        "summary": coach._generate_summary(score, all_comments)
+    }
+    
+    return final_report
+
+def generate_coaching_report(output_dir, return_dict=False):
+    """
+    Wrapper function để gọi từ main.py (tối ưu hóa).
+    
+    Args:
+        output_dir: Thư mục output
+        return_dict: True để return dict, False để ghi file
+    
+    Returns:
+        dict: Báo cáo coaching
+    """
+    coach = GolfCoachEngine()
+    
+    # Đọc report.json (có thể từ dict hoặc file)
+    input_path = os.path.join(output_dir, 'report.json')
+    
+    if os.path.exists(input_path):
+        final_result = coach.generate_report(input_path)
+        
+        # Return dict nếu tối ưu hóa, hoặc ghi file (legacy)
+        if return_dict:
+            return final_result
+        else:
+            output_path = os.path.join(output_dir, 'FINAL_report.json')
+            with open(output_path, 'w', encoding='utf-8') as f:
+                json.dump(final_result, f, indent=4, ensure_ascii=False)
+            return final_result
+    else:
+        raise FileNotFoundError(f"Report file not found: {input_path}")
+
 if __name__ == "__main__":
     import sys
     import argparse

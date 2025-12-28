@@ -3,301 +3,304 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Golf AI Analysis - Premium Experience</title>
-    <link
-      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
+    <title>Golf Tech Analysis - API Test</title>
     <style>
-      :root {
-        --primary: #00ff9d;
-        --primary-dark: #00cc7d;
-        --bg: #050505;
-        --glass: rgba(255, 255, 255, 0.05);
-        --glass-border: rgba(255, 255, 255, 0.1);
-      }
-
       * {
         margin: 0;
         padding: 0;
         box-sizing: border-box;
-        font-family: "Plus Jakarta Sans", sans-serif;
       }
-
       body {
-        background: var(--bg);
-        color: #fff;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         min-height: 100vh;
         display: flex;
-        justify-content: center;
         align-items: center;
-        overflow: hidden;
+        justify-content: center;
+        padding: 20px;
       }
-
-      /* Abstract Background */
-      .bg-glow {
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 800px;
-        height: 800px;
-        background: radial-gradient(
-          circle,
-          rgba(0, 255, 157, 0.1) 0%,
-          transparent 70%
-        );
-        z-index: -1;
-        filter: blur(100px);
-      }
-
       .container {
-        width: 100%;
-        max-width: 500px;
-        padding: 2rem;
-        z-index: 1;
-      }
-
-      .card {
-        background: var(--glass);
-        backdrop-filter: blur(20px);
-        border: 1px solid var(--glass-border);
-        border-radius: 24px;
-        padding: 3rem 2rem;
-        text-align: center;
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-      }
-
-      h1 {
-        font-size: 2rem;
-        font-weight: 700;
-        margin-bottom: 0.5rem;
-        background: linear-gradient(to right, #fff, var(--primary));
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-      }
-
-      p {
-        color: #888;
-        margin-bottom: 2.5rem;
-        font-size: 0.95rem;
-      }
-
-      .upload-area {
-        border: 2px dashed var(--glass-border);
+        background: rgba(255, 255, 255, 0.95);
         border-radius: 20px;
-        padding: 3rem 1rem;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        position: relative;
+        padding: 40px;
+        max-width: 600px;
+        width: 100%;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
       }
-
-      .upload-area:hover,
+      h1 {
+        text-align: center;
+        color: #333;
+        margin-bottom: 10px;
+        font-size: 28px;
+      }
+      .subtitle {
+        text-align: center;
+        color: #666;
+        margin-bottom: 30px;
+        font-size: 14px;
+      }
+      .upload-area {
+        border: 3px dashed #667eea;
+        border-radius: 15px;
+        padding: 40px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s;
+        margin-bottom: 20px;
+      }
+      .upload-area:hover {
+        border-color: #764ba2;
+        background: rgba(102, 126, 234, 0.05);
+      }
       .upload-area.dragover {
-        border-color: var(--primary);
-        background: rgba(0, 255, 157, 0.02);
-        transform: translateY(-2px);
+        background: rgba(102, 126, 234, 0.1);
+        border-color: #764ba2;
       }
-
-      .upload-icon {
-        font-size: 3rem;
-        margin-bottom: 1rem;
-        display: block;
-      }
-
-      .upload-text {
-        font-weight: 500;
-        color: #ccc;
-      }
-
-      #file-input {
+      input[type="file"] {
         display: none;
       }
-
-      .status-container {
-        display: none;
-        margin-top: 2rem;
-      }
-
-      .progress-bar-bg {
+      button {
         width: 100%;
-        height: 6px;
-        background: var(--glass-border);
-        border-radius: 10px;
-        overflow: hidden;
-        margin-bottom: 1rem;
-      }
-
-      .progress-bar-fill {
-        width: 0%;
-        height: 100%;
-        background: var(--primary);
-        box-shadow: 0 0 15px var(--primary);
-        transition: width 0.3s ease;
-      }
-
-      .status-text {
-        font-size: 0.85rem;
-        color: var(--primary);
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-      }
-
-      .result-btn {
-        display: none;
-        width: 100%;
-        padding: 1rem;
-        border-radius: 12px;
+        padding: 15px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
         border: none;
-        background: var(--primary);
-        color: #000;
-        font-weight: 700;
+        border-radius: 10px;
+        font-size: 16px;
+        font-weight: bold;
         cursor: pointer;
-        margin-top: 1.5rem;
-        transition: all 0.3s ease;
+        transition: transform 0.2s;
       }
-
-      .result-btn:hover {
-        background: var(--primary-dark);
+      button:hover:not(:disabled) {
         transform: translateY(-2px);
-        box-shadow: 0 10px 20px rgba(0, 255, 157, 0.2);
       }
-
-      /* Animations */
-      @keyframes pulse {
-        0% {
-          opacity: 1;
-        }
-        50% {
-          opacity: 0.5;
-        }
-        100% {
-          opacity: 1;
-        }
+      button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
       }
-
-      .analyzing {
-        animation: pulse 1.5s infinite ease-in-out;
+      .progress {
+        display: none;
+        margin: 20px 0;
+      }
+      .progress-bar {
+        height: 30px;
+        background: #e0e0e0;
+        border-radius: 15px;
+        overflow: hidden;
+      }
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #667eea, #764ba2);
+        width: 0%;
+        transition: width 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+      }
+      .result {
+        display: none;
+        margin-top: 20px;
+        padding: 20px;
+        background: #f5f5f5;
+        border-radius: 10px;
+      }
+      .result h3 {
+        margin-bottom: 10px;
+        color: #667eea;
+      }
+      .score {
+        font-size: 48px;
+        font-weight: bold;
+        text-align: center;
+        color: #764ba2;
+        margin: 20px 0;
+      }
+      .info {
+        margin: 10px 0;
+      }
+      .info strong {
+        color: #333;
+      }
+      .download-btn {
+        margin-top: 15px;
+        background: #28a745;
+      }
+      .download-btn:hover {
+        background: #218838;
       }
     </style>
   </head>
   <body>
-    <div class="bg-glow"></div>
     <div class="container">
-      <div class="card">
-        <h1>Golf AI Analysis</h1>
-        <p>Tải video swing để nhận phản hồi chuyên sâu</p>
+      <h1>🏌️ Golf Tech Analysis</h1>
+      <p class="subtitle">API Testing Interface</p>
 
-        <div class="upload-area" id="drop-zone">
-          <span class="upload-icon">🚀</span>
-          <span class="upload-text">Kéo thả video hoặc nhấn để chọn</span>
-          <input
-            type="file"
-            id="file-input"
-            accept="video/mp4,video/quicktime"
-          />
+      <div class="upload-area" id="uploadArea">
+        <div>
+          <p style="font-size: 48px">📹</p>
+          <p style="font-size: 18px; margin-top: 10px">
+            Click hoặc kéo video vào đây
+          </p>
+          <p style="font-size: 14px; color: #999; margin-top: 5px">
+            Định dạng: MP4, MOV, AVI
+          </p>
         </div>
+        <input type="file" id="fileInput" accept="video/*" />
+      </div>
 
-        <div class="status-container" id="status-container">
-          <div class="progress-bar-bg">
-            <div class="progress-bar-fill" id="progress-fill"></div>
-          </div>
-          <div class="status-text" id="status-text">Đang chuẩn bị...</div>
-        </div>
+      <button id="analyzeBtn" disabled>Phân tích Video</button>
 
-        <!-- Simplified Success View -->
-        <div id="success-view" style="display: none; margin-top: 2rem; text-align: center;">
-          <div style="font-size: 4rem; margin-bottom: 1rem;">✅</div>
-          <h2 style="color: var(--primary); margin-bottom: 0.5rem;">PHÂN TÍCH HOÀN TẤT</h2>
-          <p style="margin-bottom: 1.5rem;">File <strong>master_data.json</strong> đã được tải xuống tự động.</p>
-          <button class="result-btn" onclick="location.reload()" style="display: block;">TẢI VIDEO MỚI</button>
+      <div class="progress" id="progress">
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill">0%</div>
         </div>
+      </div>
+
+      <div class="result" id="result">
+        <h3>Kết quả phân tích</h3>
+        <div class="score" id="score">—</div>
+        <div class="info">
+          <strong>Trình độ:</strong> <span id="level">—</span>
+        </div>
+        <div class="info">
+          <strong>Lỗi chính:</strong> <span id="faults">—</span>
+        </div>
+        <button class="download-btn" id="downloadBtn">📥 Tải xuống JSON</button>
       </div>
     </div>
 
     <script>
-      const dropZone = document.getElementById("drop-zone");
-      const fileInput = document.getElementById("file-input");
-      const statusContainer = document.getElementById("status-container");
-      const progressFill = document.getElementById("progress-fill");
-      const statusText = document.getElementById("status-text");
-      const successView = document.getElementById("success-view");
+      const uploadArea = document.getElementById("uploadArea");
+      const fileInput = document.getElementById("fileInput");
+      const analyzeBtn = document.getElementById("analyzeBtn");
+      const progress = document.getElementById("progress");
+      const progressFill = document.getElementById("progressFill");
+      const result = document.getElementById("result");
+      const downloadBtn = document.getElementById("downloadBtn");
 
-      dropZone.onclick = () => fileInput.click();
+      let selectedFile = null;
+      let jsonResult = null;
 
-      dropZone.ondragover = (e) => { e.preventDefault(); dropZone.classList.add("dragover"); };
-      dropZone.ondragleave = () => { dropZone.classList.remove("dragover"); };
-      dropZone.ondrop = (e) => {
+      uploadArea.addEventListener("click", () => fileInput.click());
+
+      uploadArea.addEventListener("dragover", (e) => {
         e.preventDefault();
-        dropZone.classList.remove("dragover");
-        if (e.dataTransfer.files.length) handleUpload(e.dataTransfer.files[0]);
-      };
+        uploadArea.classList.add("dragover");
+      });
 
-      fileInput.onchange = () => {
-        if (fileInput.files.length) handleUpload(fileInput.files[0]);
-      };
+      uploadArea.addEventListener("dragleave", () => {
+        uploadArea.classList.remove("dragover");
+      });
 
-      async function handleUpload(file) {
-        dropZone.style.display = "none";
-        statusContainer.style.display = "block";
-        progressFill.style.width = "10%";
-        statusText.innerText = "Đang tải video lên...";
+      uploadArea.addEventListener("drop", (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove("dragover");
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+          selectedFile = files[0];
+          updateUI();
+        }
+      });
 
-        const formData = new FormData();
-        formData.append("file", file);
+      fileInput.addEventListener("change", (e) => {
+        if (e.target.files.length > 0) {
+          selectedFile = e.target.files[0];
+          updateUI();
+        }
+      });
 
-        try {
-          let progress = 10;
-          const interval = setInterval(() => {
-            if (progress < 95) {
-              progress += 2;
-              progressFill.style.width = `${progress}%`;
-              if (progress > 30) statusText.innerText = "Đang chạy SwingNet AI...";
-              if (progress > 70) statusText.innerText = "Đang tổng hợp Master JSON...";
-            }
-          }, 500);
-
-          const response = await fetch("/", { method: "POST", body: formData });
-          clearInterval(interval);
-
-          if (!response.ok) throw new Error("Phân tích thất bại");
-
-          // Xử lý JSON Response trực tiếp từ server (Stateless)
-          const resultData = await response.json();
-          
-          // Trigger download file JSON từ dữ liệu trong bộ nhớ
-          const jsonString = JSON.stringify(resultData, null, 4);
-          const blob = new Blob([jsonString], { type: 'application/json' });
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.style.display = 'none';
-          a.href = url;
-          a.download = 'master_data.json';
-          document.body.appendChild(a);
-          a.click();
-          window.URL.revokeObjectURL(url);
-          document.body.removeChild(a);
-
-          // Hiển thị giao diện thành công
-          showSuccess();
-
-        } catch (error) {
-          statusText.innerText = "LỖI: " + error.message;
-          statusText.style.color = "#ff4d4d";
+      function updateUI() {
+        if (selectedFile) {
+          uploadArea.innerHTML = `
+                    <p style="font-size: 24px;">✅</p>
+                    <p><strong>${selectedFile.name}</strong></p>
+                    <p style="font-size: 14px; color: #999;">${(
+                      selectedFile.size /
+                      1024 /
+                      1024
+                    ).toFixed(2)} MB</p>
+                `;
+          analyzeBtn.disabled = false;
         }
       }
 
-      function showSuccess() {
-        progressFill.style.width = '100%';
-        statusText.innerText = 'THÀNH CÔNG!';
-        statusText.style.color = '#00ff9d';
-        
-        setTimeout(() => {
-          statusContainer.style.display = "none";
-          successView.style.display = "block";
-        }, 800);
+      analyzeBtn.addEventListener("click", async () => {
+        if (!selectedFile) return;
+
+        analyzeBtn.disabled = true;
+        progress.style.display = "block";
+        result.style.display = "none";
+
+        const formData = new FormData();
+        formData.append("file", selectedFile);
+
+        // Simulate progress
+        let prog = 0;
+        const interval = setInterval(() => {
+          prog += 5;
+          if (prog <= 90) {
+            progressFill.style.width = prog + "%";
+            progressFill.textContent = prog + "%";
+          }
+        }, 200);
+
+        try {
+          const response = await fetch("/api/analyze", {
+            method: "POST",
+            body: formData,
+          });
+
+          clearInterval(interval);
+
+          if (response.ok) {
+            jsonResult = await response.json();
+            progressFill.style.width = "100%";
+            progressFill.textContent = "100%";
+
+            setTimeout(() => {
+              progress.style.display = "none";
+              showResult(jsonResult);
+            }, 500);
+          } else {
+            throw new Error("Analysis failed");
+          }
+        } catch (error) {
+          clearInterval(interval);
+          alert("Lỗi: " + error.message);
+          analyzeBtn.disabled = false;
+          progress.style.display = "none";
+        }
+      });
+
+      function showResult(data) {
+        document.getElementById("score").textContent =
+          data.coaching.final_score + "/10";
+        document.getElementById("level").textContent =
+          data.coaching.skill_level;
+        document.getElementById("faults").textContent =
+          data.coaching.key_faults.length > 0
+            ? data.coaching.key_faults[0]
+            : "Không có lỗi đáng kể";
+
+        result.style.display = "block";
+        analyzeBtn.disabled = false;
       }
+
+      downloadBtn.addEventListener("click", () => {
+        if (jsonResult) {
+          const blob = new Blob([JSON.stringify(jsonResult, null, 2)], {
+            type: "application/json",
+          });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "analysis_result.json";
+          a.click();
+          URL.revokeObjectURL(url);
+        }
+      });
     </script>
   </body>
 </html>

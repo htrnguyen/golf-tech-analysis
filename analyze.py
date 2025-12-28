@@ -167,7 +167,7 @@ class GolfDiagnosticEngine:
         analysis["score"] = round(max(0, analysis["score"]), 1)
         return analysis
 
-    def process_video_results(self, output_dir):
+    def process_video_results(self, output_dir, return_dict=False):
         # Lấy video_id từ tên thư mục output
         video_id = os.path.basename(output_dir)
         extraction_dir = os.path.join(output_dir, 'phases')
@@ -205,12 +205,15 @@ class GolfDiagnosticEngine:
         if address_landmarks:
             report["view_angle"] = self.detect_view_angle(address_landmarks)
         
-        # Lưu báo cáo vào thư mục output của video
-        report_path = os.path.join(output_dir, 'report.json')
-        with open(report_path, 'w', encoding='utf-8') as f:
-            json.dump(report, f, indent=4, ensure_ascii=False)
-            
-        return report
+        # Return dict hoặc ghi file (legacy)
+        if return_dict:
+            return report
+        else:
+            # Lưu báo cáo vào thư mục output của video
+            report_path = os.path.join(output_dir, 'report.json')
+            with open(report_path, 'w', encoding='utf-8') as f:
+                json.dump(report, f, indent=4, ensure_ascii=False)
+            return report
 
 if __name__ == "__main__":
     import sys

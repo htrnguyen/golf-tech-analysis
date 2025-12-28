@@ -34,6 +34,8 @@ env/
 
 # Output files
 output/
+results/
+uploads/
 *.mp4
 *.avi
 *.mov
@@ -52,6 +54,15 @@ Thumbs.db
 
 # Data files (if large)
 data/
+
+# Test files
+test_api_endpoint.py
+api_test_result.json
+test_result.json
+
+# Large binaries
+ngrok.exe
+*.exe
 
 # Jupyter Notebook
 .ipynb_checkpoints

@@ -2,142 +2,127 @@ import os
 import sys
 sys.stdout.reconfigure(encoding="utf-8")
 import json
-import subprocess
-import argparse
+import shutil
 
-def run_step(command, step_desc):
+# Direct imports instead of subprocess
+sys.path.insert(0, os.path.abspath('.'))
+from extract import run_ai_extraction
+from analyze import GolfDiagnosticEngine
+from coach import generate_coaching_report_from_dict
+
+def analyze_video_fast(video_path, production=True, output_file=None, output_base="output"):
     """
-    Thực thi một lệnh shell và in kết quả gọn gàng.
+    Phiên bản tối ưu: Gọi trực tiếp các function thay vì subprocess.
+    
+    Args:
+        video_path: Đường dẫn video
+        production: Nếu True, tắt logs để tăng tốc
+        output_file: Nếu có, lưu kết quả vào file này (CLI mode)
+        output_base: Thư mục gốc để lưu output ("results" cho CLI, "output" cho API)
+    
+    Returns:
+        dict: Master data JSON
     """
-    print(f"{step_desc}...", end=" ", flush=True)
-    
-    # Force UTF-8 encoding for subprocess
-    env = os.environ.copy()
-    env["PYTHONIOENCODING"] = "utf-8"
-    
-    result = subprocess.run(command, capture_output=True, text=True, errors='replace', encoding='utf-8', env=env)
-    
-    if result.returncode != 0:
-        print("FAILED")
-        print(f"Lỗi chi tiết:\n{result.stderr}")
-        return False
-        
-    print("DONE")
-    return True
-
-def main():
-    # Cấu hình stdout để hỗ trợ tiếng Việt trên Windows terminal
-    if sys.stdout.encoding != 'utf-8':
-        try:
-            sys.stdout.reconfigure(encoding='utf-8')
-            sys.stderr.reconfigure(encoding='utf-8')
-        except AttributeError:
-            import io
-            sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
-            sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
-
-    parser = argparse.ArgumentParser(description='Hệ thống Phân tích Golf thông minh (End-to-End)')
-    parser.add_argument('video_path', help='Đường dẫn đến file video .mp4')
-    parser.add_argument('--slow', type=float, default=1.0, help='Tỷ lệ làm chậm (0.5 hoặc 0.2 để tăng độ chính xác)')
-    args = parser.parse_args()
-
-    video_path = args.video_path
     video_name = os.path.basename(video_path)
     video_id = os.path.splitext(video_name)[0]
     
-    # Tạo thư mục output riêng cho video này
-    output_dir = os.path.join('output', video_id)
+    output_dir = os.path.join(output_base, video_id)
     os.makedirs(output_dir, exist_ok=True)
-
-    print("====================================================")
-    print(f"BẮT ĐẦU PHÂN TÍCH VIDEO: {video_name}")
-    print(f"Thư mục kết quả: {output_dir}")
-    print("====================================================")
-
-    # Bước 1: Trích xuất giai đoạn bằng AI
-    if not run_step([sys.executable, 'extract.py', video_path, '--slow', str(args.slow), '--output_dir', output_dir], 
-                    "[1/4] Nhận diện giai đoạn"):
-        sys.exit(1)
-
-    # Bước 2: Chẩn đoán tư thế (Landmark Analysis)
-    if not run_step([sys.executable, 'analyze.py', output_dir], 
-                    "[2/4] Phân tích tư thế"):
-        sys.exit(1)
+    
+    if not production:
+        print(f"Analyzing: {video_name}")
+    
+    try:
+        # Step 1: AI Extraction (optimized - skip slow video but KEEP phase images for analysis)
+        extraction_result = run_ai_extraction(
+            video_path, 
+            slow_factor=1.0, 
+            output_dir=output_dir,
+            skip_slow_video=True,  # Bỏ tạo slow-motion  
+            skip_phase_images=False,  # CẦN ảnh phases để analyze.py phân tích
+            return_dict=True  # NEW: Return dict thay vì ghi file
+        )
         
-    # Tự động dọn dẹp thư mục phases để tiết kiệm dung lượng
-    import shutil
-    phases_dir = os.path.join(output_dir, 'phases')
-    if os.path.exists(phases_dir):
-        try:
-            shutil.rmtree(phases_dir)
-        except Exception as e:
-            pass # Silent cleanup
-
-    # Bước 3: Đưa ra nhận xét và chấm điểm (Coaching Engine)
-    if not run_step([sys.executable, 'coach.py', output_dir], 
-                    "[3/4] Chấm điểm & Phân tích"):
-        sys.exit(1)
-
-    # Bước 4: Tạo video báo cáo trực quan (Timeline) - ĐÃ LOẠI BỎ ĐỂ CHUYỂN SANG OVERLAY PHÍA CLIENT
-    # slow_video_path = os.path.join(output_dir, "slow_motion.mp4")
-    # target_video_for_report = video_path
-    # if os.path.exists(slow_video_path):
-    #     target_video_for_report = slow_video_path
-    # if not run_step([sys.executable, 'report.py', target_video_for_report, output_dir], 
-    #                 "[4/4] Tạo báo cáo video"):
-    #     sys.exit(1)
-
-    # 4. TỔNG HỢP VÀ DỌN DẸP -> CHỈ GIỮ LẠI MASTER JSON
-    final_report_path = os.path.join(output_dir, "FINAL_report.json")
-    if os.path.exists(final_report_path):
-        try:
-            with open(final_report_path, 'r', encoding='utf-8') as f:
-                report_data = json.load(f)
-            
-            master_data = {
-                "status": "success",
-                "job_id": video_id,
-                "metadata": {},
-                "analysis": {},
-                "coaching": report_data
-            }
-            
-            # Đọc Metadata
-            metadata_path = os.path.join(output_dir, "metadata.json")
-            if os.path.exists(metadata_path):
-                with open(metadata_path, 'r', encoding='utf-8') as f:
-                    master_data["metadata"] = json.load(f)
-            
-            # Đọc Analysis chi tiết
-            report_detail_path = os.path.join(output_dir, "report.json")
-            if os.path.exists(report_detail_path):
-                with open(report_detail_path, 'r', encoding='utf-8') as f:
-                    master_data["analysis"] = json.load(f)
-            
-            # Lưu Master JSON
-            master_json_path = os.path.join(output_dir, "master_data.json")
-            with open(master_json_path, 'w', encoding='utf-8') as f:
+        if not extraction_result:
+            raise Exception("Extraction failed")
+        
+        # Step 2: Analyze poses
+        engine = GolfDiagnosticEngine()
+        analysis_result = engine.process_video_results(
+            output_dir,
+            return_dict=True  # NEW: Return dict thay vì ghi file
+        )
+        
+        if not analysis_result:
+            raise Exception("Analysis failed")
+        
+        # Step 3: Generate coaching (pass analysis result as dict)
+        coaching_result = generate_coaching_report_from_dict(analysis_result)
+        
+        if not coaching_result:
+            raise Exception("Coaching failed")
+        
+        # Cleanup phases directory ngay lập tức
+        phases_dir = os.path.join(output_dir, 'phases')
+        if os.path.exists(phases_dir):
+            shutil.rmtree(phases_dir, ignore_errors=True)
+        
+        # Tổng hợp master data
+        master_data = {
+            "status": "success",
+            "job_id": video_id,
+            "metadata": extraction_result.get("metadata", {}),
+            "analysis": analysis_result,
+            "coaching": coaching_result
+        }
+        
+        # Lưu file nếu CLI mode
+        if output_file:
+            os.makedirs(os.path.dirname(output_file), exist_ok=True)
+            with open(output_file, 'w', encoding='utf-8') as f:
                 json.dump(master_data, f, indent=4, ensure_ascii=False)
-            
-            # --- DỌN DẸP FILE TRUNG GIAN (CHỈ GIỮ MASTER JSON) ---
-            annotated_dir = os.path.join(output_dir, "annotated")
-            files_to_delete = [metadata_path, report_detail_path, final_report_path]
-            
-            # Xóa các file JSON trung gian
-            for f_path in files_to_delete:
-                if os.path.exists(f_path):
-                    os.remove(f_path)
-            
-            # Xóa thư mục annotated nếu tồn tại
-            if os.path.exists(annotated_dir):
-                shutil.rmtree(annotated_dir, ignore_errors=True)
-            
-            print(f"\n[MASTER_JSON_CREATED]: {master_json_path}")
-            
-        except Exception as e:
-            print(f"Lưu Master JSON hoặc Dọn dẹp thất bại: {e}")
-    else:
-        print(f"\n[ERROR]: Không tìm thấy FINAL_report.json để tạo Master JSON.")
+            if not production:
+                print(f"\n✅ Kết quả đã lưu tại: {output_file}")
+        
+        # Cleanup ONLY nếu không phải CLI mode (API mode)
+        if not output_file:
+            # Cleanup phases directory
+            phases_dir = os.path.join(output_dir, 'phases')
+            if os.path.exists(phases_dir):
+                shutil.rmtree(phases_dir, ignore_errors=True)
+            # Cleanup output directory sau khi có data
+            shutil.rmtree(output_dir, ignore_errors=True)
+        else:
+            # CLI mode: Chỉ cleanup phases, giữ lại master_data.json
+            phases_dir = os.path.join(output_dir, 'phases')
+            if os.path.exists(phases_dir):
+                shutil.rmtree(phases_dir, ignore_errors=True)
+        
+        return master_data
+        
+    except Exception as e:
+        if not production:
+            import traceback
+            traceback.print_exc()
+        
+        # Cleanup on error
+        if os.path.exists(output_dir):
+            shutil.rmtree(output_dir, ignore_errors=True)
+        
+        raise e
+
+# CLI function
+def main():
+    import argparse
+    parser = argparse.ArgumentParser(description='Hệ thống Phân tích Golf')
+    parser.add_argument('video_path', help='Đường dẫn đến file video .mp4')
+    args = parser.parse_args()
+    
+    video_id = os.path.splitext(os.path.basename(args.video_path))[0]
+    output_file = os.path.join('results', video_id, 'master_data.json')
+    
+    result = analyze_video_fast(args.video_path, production=False, output_file=output_file, output_base="results")
+    # Kết quả đã được in ra và lưu file
 
 if __name__ == "__main__":
     main()
