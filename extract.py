@@ -25,7 +25,7 @@ def smooth_probs(probs, window_size=5):
     # Chia lại để tổng xác suất mỗi frame = 1
     return smoothed / smoothed.sum(axis=1, keepdims=True)
 
-def run_ai_extraction(video_path, slow_factor=1.0, output_dir=None, skip_slow_video=False, skip_phase_images=False, return_dict=False):
+def run_ai_extraction(video_path, slow_factor=1.0, output_dir=None, skip_slow_video=False, skip_phase_images=False, return_dict=False, production=False):
     if not os.path.exists(video_path):
         print(f"Lỗi: Không tìm thấy file {video_path}")
         return
@@ -55,11 +55,13 @@ def run_ai_extraction(video_path, slow_factor=1.0, output_dir=None, skip_slow_vi
     save_dict = torch.load(model_path, map_location=device)
     model.load_state_dict(save_dict['model_state_dict'])
     model.to(device).eval()
-    print(f"Mô hình đã sẵn sàng trên {device} (Slow factor: {slow_factor})")
+    if not production:
+        print(f"Mô hình đã sẵn sàng trên {device} (Slow factor: {slow_factor})")
 
     transform = transforms.Compose([ToTensor(), Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
     
-    print(f"Đang đọc video {video_path}...")
+    if not production:
+        print(f"Đang đọc video {video_path}...")
     cap = cv2.VideoCapture(video_path)
     raw_frames = []
     while True:
@@ -74,7 +76,8 @@ def run_ai_extraction(video_path, slow_factor=1.0, output_dir=None, skip_slow_vi
 
     # Frame Interpolation (Nội suy tuyến tính)
     if slow_factor < 1.0:
-        print(f"Đang nội suy frame (Slow-mo {slow_factor}x)...")
+        if not production:
+            print(f"Đang nội suy frame (Slow-mo {slow_factor}x)...")
         steps = int(1.0 / slow_factor)
         interpolated_full_res = []
         for i in range(len(raw_frames) - 1):
@@ -90,7 +93,8 @@ def run_ai_extraction(video_path, slow_factor=1.0, output_dir=None, skip_slow_vi
         # Lưu file video slow-motion vật lý (optional)
         if not skip_slow_video:
             slow_video_path = os.path.join(output_dir, "slow_motion.mp4")
-            print(f"Đang ghi file slow motion: {slow_video_path}")
+            if not production:
+                print(f"Đang ghi file slow motion: {slow_video_path}")
             
             # Lấy lại FPS gốc (hoặc mặc định 30)
             cap = cv2.VideoCapture(video_path)
@@ -105,16 +109,18 @@ def run_ai_extraction(video_path, slow_factor=1.0, output_dir=None, skip_slow_vi
             for frame in full_res_frames:
                 out.write(frame)
             out.release()
-            print(f"Đã tạo video slow motion: {slow_video_path}")
+            if not production:
+                print(f"Đã tạo video slow motion: {slow_video_path}")
         
     else:
         full_res_frames = raw_frames
 
     # Tiền xử lý cho AI
-    print("Đang tiền xử lý cho AI...")
+    if not production:
+        print("Đang tiền xử lý cho AI...")
     images = []
     input_size = 160
-    for img in tqdm(full_res_frames):
+    for img in tqdm(full_res_frames, disable=production):
         h, w = img.shape[:2]
         ratio = input_size / max(h, w)
         new_size = (int(w * ratio), int(h * ratio))
@@ -127,7 +133,8 @@ def run_ai_extraction(video_path, slow_factor=1.0, output_dir=None, skip_slow_vi
     sample = transform({'images': np.asarray(images), 'labels': np.zeros(len(images))})
     img_tensor = sample['images'].unsqueeze(0).to(device)
     
-    print("Đang chạy AI Inference...")
+    if not production:
+        print("Đang chạy AI Inference...")
     with torch.no_grad():
         seq_length, batch, all_logits = 48, 0, []
         while batch * seq_length < img_tensor.shape[1]:
@@ -149,7 +156,8 @@ def run_ai_extraction(video_path, slow_factor=1.0, output_dir=None, skip_slow_vi
         anchor_class = np.argmax(max_probs) # Class có độ tự tin cao nhất trong 8 sự kiện
         anchor_frame = np.argmax(probs_events[:, anchor_class])
         
-        print(f"Detected Anchor: {labels[anchor_class]} at frame {anchor_frame} (conf: {max_probs[anchor_class]:.2f})")
+        if not production:
+            print(f"Detected Anchor: {labels[anchor_class]} at frame {anchor_frame} (conf: {max_probs[anchor_class]:.2f})")
         
         events = np.zeros(8, dtype=int)
         events[anchor_class] = anchor_frame
@@ -184,7 +192,8 @@ def run_ai_extraction(video_path, slow_factor=1.0, output_dir=None, skip_slow_vi
                 events[i] = total_frames - 1
             current_limit = events[i]
             
-        print(f"Detected Events (Frames): {events}")
+        if not production:
+            print(f"Detected Events (Frames): {events}")
 
         # Lưu thông tin frame index để visual_report sử dụng
         event_metadata = {}
@@ -205,13 +214,15 @@ def run_ai_extraction(video_path, slow_factor=1.0, output_dir=None, skip_slow_vi
         
         # Return dict nếu cần, hoặc ghi file (legacy)
         if return_dict:
-            print("Extraction complete (dict mode)")
+            if not production:
+                print("Extraction complete (dict mode)")
             return {"metadata": metadata}
         else:
             metadata_path = os.path.join(output_dir, "metadata.json")
             with open(metadata_path, 'w') as f:
                 json.dump(metadata, f)
-            print(f"Xong! Ảnh trích xuất lưu tại {phases_dir}")
+            if not production:
+                print(f"Xong! Ảnh trích xuất lưu tại {phases_dir}")
             return metadata
 
 if __name__ == "__main__":

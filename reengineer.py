@@ -12,8 +12,14 @@ if sys.stdout.encoding != 'utf-8':
     try:
         sys.stdout.reconfigure(encoding='utf-8')
     except AttributeError:
-        import io
-        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+        pass
+
+# Tắt logs từ TensorFlow/MediaPipe trong production
+import os as _os
+_os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # Tắt TF logs
+import logging
+logging.getLogger('tensorflow').setLevel(logging.ERROR)
+logging.getLogger('mediapipe').setLevel(logging.ERROR)
 
 POSE_CONNECTIONS = [
     (11, 12), (11, 13), (13, 15), (12, 14), (14, 16), # Vai - Khuỷu - Cổ tay
@@ -52,7 +58,7 @@ def draw_glass_panel(img, pt1, pt2, color=(0, 0, 0), alpha=0.5):
     cv2.rectangle(overlay, pt1, pt2, color, -1)
     return cv2.addWeighted(overlay, alpha, img, 1 - alpha, 0)
 
-def reengineer_video(json_path, video_path, output_path=None):
+def reengineer_video(json_path, video_path, output_path=None, production=False):
     """
     Áp dụng dữ liệu JSON lên video gốc (nguyên kích thước) với overlay cao cấp.
     """
@@ -98,7 +104,8 @@ def reengineer_video(json_path, video_path, output_path=None):
     else:
         temp_output_path = final_output_path
 
-    print(f"--- Đang tạo video Premium: {os.path.basename(video_path)} ({vw}x{vh}) ---")
+    if not production:
+        print(f"--- Đang tạo video Premium: {os.path.basename(video_path)} ({vw}x{vh}) ---")
 
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     out = cv2.VideoWriter(temp_output_path, fourcc, fps_video, (vw, vh))
@@ -224,7 +231,8 @@ def reengineer_video(json_path, video_path, output_path=None):
             os.remove(video_path)
         os.rename(temp_output_path, final_output_path)
 
-    print(f"--- HOÀN TẤT! Video lưu tại: {final_output_path} ---")
+    if not production:
+        print(f"--- HOÀN TẤT! Video lưu tại: {final_output_path} ---")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Golf Video Re-engineer Tool")

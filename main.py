@@ -40,7 +40,8 @@ def analyze_video_fast(video_path, production=True, output_file=None, output_bas
             output_dir=output_dir,
             skip_slow_video=True,  # Bỏ tạo slow-motion  
             skip_phase_images=False,  # CẦN ảnh phases để analyze.py phân tích
-            return_dict=True  # NEW: Return dict thay vì ghi file
+            return_dict=True,  # NEW: Return dict thay vì ghi file
+            production=production  # Tắt logs khi production=True
         )
         
         if not extraction_result:
@@ -90,7 +91,7 @@ def analyze_video_fast(video_path, production=True, output_file=None, output_bas
                     from reengineer import reengineer_video
                     output_video = os.path.join(os.path.dirname(output_file), 'analyzed_video.mp4')
                     print(f"\nĐang tạo video có overlay...")
-                    reengineer_video(output_file, video_path, output_video)
+                    reengineer_video(output_file, video_path, output_video, production=production)
                     print(f"Video đã lưu tại: {output_video}")
                 except Exception as e:
                     print(f"WARNING: Không thể tạo video overlay: {e}")

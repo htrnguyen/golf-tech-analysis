@@ -49,7 +49,7 @@ async def analyze_with_video(file: UploadFile = File(...), background_tasks: Bac
         
         # Tạo video có overlay
         output_video = os.path.join(output_dir, "analyzed_video.mp4")
-        reengineer_video(master_json, video_path, output_video)
+        reengineer_video(master_json, video_path, output_video, production=True)
         
         # Cleanup video gốc
         if os.path.exists(video_path): 
