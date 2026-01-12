@@ -71,3 +71,6 @@ ngrok.exe
 !demo/
 !demo/*.mp4
 !demo/*.json
+
+# documents
+!docs/

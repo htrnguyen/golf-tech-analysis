@@ -24,11 +24,26 @@ class GolfCoachEngine:
         
         # Thư viện bài tập gợi ý
         self.drill_library = {
-            "Tư thế đứng quá rộng": "Bài tập đứng trên hai đầu gối hoặc khép chân để cảm nhận sự xoay trục.",
-            "Tư thế đứng quá hẹp": "Bài tập bước rộng chân và xoay hông tại chỗ để tạo nền tảng vững chắc.",
-            "Tay trái bị cong quá nhiều ở đỉnh swing (Chicken Wing)": "Kẹp một chiếc khăn hoặc quả bóng tập giữa hai cánh tay ở nách để giữ sự kết nối.",
-            "Tay trái không thẳng lúc tiếp bóng, mất lực": "Bài tập Half-swing (swing nửa vòng) tập trung vào việc giữ tay lead thẳng và xoay hông.",
-            "Kết thúc không vững, trọng tâm chưa dồn hết về chân trái": "Bài tập Hold Finish - giữ nguyên tư thế kết thúc trong 3 giây cho đến khi thăng bằng hoàn toàn."
+            # Stance & Address
+            "Tư thế đứng quá rộng (Wide Stance)": "Thu hẹp khoảng cách chân bằng chiều rộng vai để xoay hông dễ dàng hơn.",
+            "Tư thế đứng quá hẹp (Narrow Stance)": "Mở rộng chân thêm chút (bằng vai) để tạo nền tảng vững chắc.",
+            "Đầu gối quá thẳng, thiếu sự linh hoạt (Locking Knees)": "Thả lỏng đầu gối, làm động tác như chuẩn bị ngồi xuống ghế cao.",
+            "Đầu gối khuỵu quá mức (Sitting too much)": "Đứng cao hơn chút, chỉ khuỵu nhẹ đầu gối để dồn trọng tâm lên ức bàn chân.",
+
+            # Backswing & Top
+            "Tay trái bị gập (Chicken Wing) - Mất bán kính swing": "Tập kẹp khăn dưới nách khi swing để giữ tay sát thân.",
+            "Đầu di chuyển quá nhiều (Head Sway) - Gây mất ổn định": "Nhờ bạn giữ đầu hoặc nhìn vào gương, tập xoay vai mà đầu vẫn giữ yên.",
+            "Hông trượt sang phải (Hip Slide) thay vì xoay": "Tập bài xoay hông trong xô nước (Barrel Turn) - tưởng tượng đứng trong thùng phuy và chỉ xoay, không trượt.",
+            "Lỗi trục nghiêng ngược (Reverse Spine Angle) - Dễ gây đau lưng": "Đảm bảo vai trái hạ thấp hơn vai phải khi lên đỉnh, mắt vẫn nhìn vào phía sau bóng.",
+
+            # Impact
+            "Tay trái gập khi tiếp bóng (Scooping/Chicken Wing)": "Bài tập Impact Bag: Tập đánh vào túi đệm và dừng lại ở Impact để cảm nhận tay thẳng.",
+            "Trọng tâm dồn về chân sau (Hanging Back) - Mất lực": "Bài tập bước chân (Step Drill): Bước chân trái lên khi downswing để ép trọng tâm chuyển sang trái.",
+            "Thiếu chuyển trọng tâm sang chân trái": "Đặt bóng dưới lòng bàn chân phải, khi swing xuống phải nhấc gót phải lên khỏi bóng.",
+            "Đầu lao về trước quá sớm (Lunging)": "Cố gắng cảm giác như 'đánh đầu' về phía sau khi gậy tiếp xúc bóng.",
+            
+            # Finish
+            "Kết thúc không dồn hết trọng tâm sang trái": "Tập giữ tư thế kết thúc trong 3 giây, nhấc hoàn toàn chân phải lên chỉ tì bằng mũi giày."
         }
 
     def generate_report(self, diagnostic_json_path):

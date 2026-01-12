@@ -18,7 +18,7 @@ class EventDetector(nn.Module):
         # Get the directory of the current script (src/)
         current_script_directory = os.path.dirname(os.path.abspath(__file__))
         # Path to models folder (outside src/)
-        relative_directory = '../models/mobilenet_v2.pth.tar'
+        relative_directory = '../models_v1/mobilenet_v2.pth.tar'
         
         # Construct the absolute path
         model_dir = os.path.normpath(os.path.join(current_script_directory, relative_directory))

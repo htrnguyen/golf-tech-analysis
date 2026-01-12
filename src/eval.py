@@ -60,7 +60,7 @@ if __name__ == '__main__':
                           bidirectional=True,
                           dropout=False)
 
-    save_dict = torch.load('models/swingnet_1800.pth.tar')
+    save_dict = torch.load('models_v1/swingnet_1800.pth.tar')
     model.load_state_dict(save_dict['model_state_dict'])
     model.cuda()
     model.eval()

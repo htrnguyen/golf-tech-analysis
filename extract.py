@@ -33,18 +33,15 @@ def run_ai_extraction(video_path, slow_factor=1.0, output_dir=None, skip_slow_vi
     video_name = os.path.basename(video_path)
     video_prefix = os.path.splitext(video_name)[0]
     
-    # Nếu không có output_dir, dùng mặc định
     if output_dir is None:
         output_dir = os.path.join('output', video_prefix)
         
     model_path = 'models/swingnet_1800.pth.tar'
     phases_dir = os.path.join(output_dir, 'phases')
     
-    # Thêm số thứ tự để đảm bảo sắp xếp đúng trong thư mục
     labels = ['1_Address', '2_Toe-up', '3_Mid-Backswing', '4_Top', 
               '5_Mid-Downswing', '6_Impact', '7_Mid-Follow-Through', '8_Finish']
     
-    # Chỉ tạo thư mục phases nếu cần lưu ảnh
     if not skip_phase_images:
         for label in labels: 
             os.makedirs(os.path.join(phases_dir, label), exist_ok=True)
@@ -74,7 +71,7 @@ def run_ai_extraction(video_path, slow_factor=1.0, output_dir=None, skip_slow_vi
         print("Không tìm thấy frame nào.")
         return
 
-    # Frame Interpolation (Nội suy tuyến tính)
+    # Frame Interpolation
     if slow_factor < 1.0:
         if not production:
             print(f"Đang nội suy frame (Slow-mo {slow_factor}x)...")
@@ -115,13 +112,20 @@ def run_ai_extraction(video_path, slow_factor=1.0, output_dir=None, skip_slow_vi
     else:
         full_res_frames = raw_frames
 
-    # Tiền xử lý cho AI
     if not production:
         print("Đang tiền xử lý cho AI...")
     images = []
     input_size = 160
     for img in tqdm(full_res_frames, disable=production):
         h, w = img.shape[:2]
+        if h > w:
+            center_y = h // 2
+            half_w = w // 2
+            start_y = max(0, center_y - half_w)
+            end_y = min(h, center_y + half_w)
+            img = img[start_y:end_y, :]
+            h, w = img.shape[:2]
+
         ratio = input_size / max(h, w)
         new_size = (int(w * ratio), int(h * ratio))
         resized = cv2.resize(img, new_size)
@@ -145,15 +149,11 @@ def run_ai_extraction(video_path, slow_factor=1.0, output_dir=None, skip_slow_vi
         logits_concat = np.concatenate(all_logits, axis=0)
         probs = F.softmax(torch.tensor(logits_concat), dim=1).numpy()
         
-        # Làm mượt kết quả để giảm nhiễu (đặc biệt cho DTL)
         probs = smooth_probs(probs, window_size=5)
         
-        # Áp dụng thuật toán Anchor-based Bidirectional Search
-        # 1. Tìm sự kiện "Neo" (Anchor) đáng tin cậy nhất (thường là Impact hoặc Top)
-        # Chỉ xét 8 lớp sự kiện đầu tiên, bỏ qua lớp số 9 (No Event/Background)
         probs_events = probs[:, :8]
-        max_probs = np.max(probs_events, axis=0) # Max prob của từng class sự kiện
-        anchor_class = np.argmax(max_probs) # Class có độ tự tin cao nhất trong 8 sự kiện
+        max_probs = np.max(probs_events, axis=0)
+        anchor_class = np.argmax(max_probs)
         anchor_frame = np.argmax(probs_events[:, anchor_class])
         
         if not production:
@@ -162,11 +162,9 @@ def run_ai_extraction(video_path, slow_factor=1.0, output_dir=None, skip_slow_vi
         events = np.zeros(8, dtype=int)
         events[anchor_class] = anchor_frame
         
-        # 2. Đi lùi: Tìm các pha trước Anchor
         current_limit = anchor_frame
         for i in range(anchor_class - 1, -1, -1):
             if current_limit > 0:
-                # Tìm max trong vùng cho phép [0, current_limit]
                 segment = probs[0:current_limit, i]
                 if len(segment) > 0:
                     events[i] = np.argmax(segment)
@@ -176,12 +174,11 @@ def run_ai_extraction(video_path, slow_factor=1.0, output_dir=None, skip_slow_vi
                 events[i] = 0
             current_limit = events[i]
             
-        # 3. Đi tiến: Tìm các pha sau Anchor
         current_limit = anchor_frame
         total_frames = probs.shape[0]
         for i in range(anchor_class + 1, 8):
             if current_limit < total_frames - 1:
-                # Tìm max trong vùng cho phép [current_limit + 1, end]
+                segment = probs[current_limit + 1:, i]
                 # Bắt buộc tiến ít nhất 1 frame
                 segment = probs[current_limit + 1:, i]
                 if len(segment) > 0:
@@ -195,11 +192,9 @@ def run_ai_extraction(video_path, slow_factor=1.0, output_dir=None, skip_slow_vi
         if not production:
             print(f"Detected Events (Frames): {events}")
 
-        # Lưu thông tin frame index để visual_report sử dụng
         event_metadata = {}
         for i, frame_idx in enumerate(events):
             if frame_idx < len(full_res_frames):
-                # Chỉ lưu ảnh nếu không skip
                 if not skip_phase_images:
                     cv2.imwrite(os.path.join(phases_dir, labels[i], f"{video_prefix}.jpg"), full_res_frames[frame_idx])
                 event_metadata[labels[i]] = int(frame_idx)
