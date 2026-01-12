@@ -25,25 +25,31 @@ class GolfCoachEngine:
         # Thư viện bài tập gợi ý
         self.drill_library = {
             # Stance & Address
-            "Tư thế đứng quá rộng (Wide Stance)": "Thu hẹp khoảng cách chân bằng chiều rộng vai để xoay hông dễ dàng hơn.",
-            "Tư thế đứng quá hẹp (Narrow Stance)": "Mở rộng chân thêm chút (bằng vai) để tạo nền tảng vững chắc.",
-            "Đầu gối quá thẳng, thiếu sự linh hoạt (Locking Knees)": "Thả lỏng đầu gối, làm động tác như chuẩn bị ngồi xuống ghế cao.",
-            "Đầu gối khuỵu quá mức (Sitting too much)": "Đứng cao hơn chút, chỉ khuỵu nhẹ đầu gối để dồn trọng tâm lên ức bàn chân.",
+            "Tư thế đứng quá rộng (Wide Stance) - Khó xoay người": "Thu hẹp khoảng cách chân bằng chiều rộng vai để xoay hông dễ dàng hơn.",
+            "Tư thế đứng quá hẹp (Narrow Stance) - Mất thăng bằng": "Mở rộng chân thêm chút (bằng vai) để tạo nền tảng vững chắc.",
+            "Đầu gối khóa thẳng (Locking Knees) - Cần chùng gối": "Thả lỏng đầu gối, làm động tác như chuẩn bị ngồi xuống ghế cao (Athletic Posture).",
+            "Đầu gối khuỵu quá thấp (Sitting too much)": "Đứng cao hơn chút, chỉ khuỵu nhẹ đầu gối để dồn trọng tâm lên ức bàn chân.",
+            "Vai trái thấp hơn vai phải (Nên setup vai phải thấp hơn)": "Hạ thấp vai phải xuống khi vào bóng, cảm giác tay phải với thấp hơn tay trái trên cán gậy.",
 
             # Backswing & Top
-            "Tay trái bị gập (Chicken Wing) - Mất bán kính swing": "Tập kẹp khăn dưới nách khi swing để giữ tay sát thân.",
-            "Đầu di chuyển quá nhiều (Head Sway) - Gây mất ổn định": "Nhờ bạn giữ đầu hoặc nhìn vào gương, tập xoay vai mà đầu vẫn giữ yên.",
+            "Tay trái bị gập (Chicken Wing) - Mất bán kính swing": "Tập kẹp khăn dưới nách trái khi swing để giữ tay sát thân.",
+            "Khuỷu tay phải bay quá cao (Flying Elbow)": "Tưởng tượng đang bê một cái khay bằng tay phải (Waiter Tray Drill) ở đỉnh Backswing.",
+            "Chân phải duỗi quá thẳng - Mất tư thế (Loss of Posture)": "Giữ độ khuỵu của đầu gối phải không đổi suốt quá trình Backswing.",
+            "Đầu di chuyển lắc sang phải (Sway)": "Nhờ bạn giữ đầu hoặc nhìn vào gương, tập xoay vai quanh trục cột sống thay vì trượt ngang.",
+            "Đầu ngả ngược về mục tiêu (Reverse Pivot)": "Dồn trọng tâm chân phải nhiều hơn khi Backswing, cảm giác ngực quay sang phải.",
             "Hông trượt sang phải (Hip Slide) thay vì xoay": "Tập bài xoay hông trong xô nước (Barrel Turn) - tưởng tượng đứng trong thùng phuy và chỉ xoay, không trượt.",
-            "Lỗi trục nghiêng ngược (Reverse Spine Angle) - Dễ gây đau lưng": "Đảm bảo vai trái hạ thấp hơn vai phải khi lên đỉnh, mắt vẫn nhìn vào phía sau bóng.",
+            "Trục cột sống nghiêng ngược (Reverse Spine Angle) - Nguy hiểm": "Đảm bảo vai trái hạ thấp và xoay ra sau bóng, không để đầu đổ về phía mục tiêu.",
 
             # Impact
-            "Tay trái gập khi tiếp bóng (Scooping/Chicken Wing)": "Bài tập Impact Bag: Tập đánh vào túi đệm và dừng lại ở Impact để cảm nhận tay thẳng.",
-            "Trọng tâm dồn về chân sau (Hanging Back) - Mất lực": "Bài tập bước chân (Step Drill): Bước chân trái lên khi downswing để ép trọng tâm chuyển sang trái.",
-            "Thiếu chuyển trọng tâm sang chân trái": "Đặt bóng dưới lòng bàn chân phải, khi swing xuống phải nhấc gót phải lên khỏi bóng.",
-            "Đầu lao về trước quá sớm (Lunging)": "Cố gắng cảm giác như 'đánh đầu' về phía sau khi gậy tiếp xúc bóng.",
+            "Tay trái gập khi tiếp bóng (Scooping) - Mất lực": "Bài tập Impact Bag: Tập đánh vào túi đệm và dừng lại ở Impact để cảm nhận tay trái duỗi thẳng.",
+            "Thiếu chuyển trọng tâm sang trái (Hanging Back)": "Bài tập bước chân (Step Drill): Bước chân trái lên khi downswing để ép trọng tâm chuyển sang trái.",
+            "Đầu lao về trước quá sớm (Lunging)": "Cố gắng giữ mắt nhìn vào vị trí phía sau bóng cho đến khi gậy tiếp xúc xong.",
+            "Đầu nhún xuống quá thấp (Head Dip)": "Tập swing chậm và nhờ người giữ hờ trên đỉnh đầu để cảm nhận cao độ ổn định.",
+            "Nhổm người lên sớm (Early Extension)": "Bài tập ghế (Chair Drill): Đặt mông chạm nhẹ vào thành ghế/tường phía sau và giữ tiếp xúc đó suốt cú đánh.",
             
             # Finish
-            "Kết thúc không dồn hết trọng tâm sang trái": "Tập giữ tư thế kết thúc trong 3 giây, nhấc hoàn toàn chân phải lên chỉ tì bằng mũi giày."
+            "Kết thúc chưa thăng bằng trên chân trái": "Tập giữ tư thế kết thúc (Pose) trong 3 giây sau khi đánh, nhấc hoàn toàn chân phải lên.",
+            "Kết thúc tay quá thấp (Low Finish)": "Tập swing và cố gắng đưa tay cao qua vai trái khi kết thúc, hướng khuy của tay áo về mục tiêu."
         }
 
     def generate_report(self, diagnostic_json_path):
