@@ -115,8 +115,8 @@ async def api_analyze(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# Check health
-@app.get("/api/health")
+# Check health (GET, HEAD)
+@app.api_route("/api/health", methods=["GET", "HEAD"])
 async def health_check():
     return {"status": "ok"}
 
