@@ -19,6 +19,7 @@ templates = Jinja2Templates(directory=TEMPLATES_DIR)
 from main import analyze_video_fast
 from reengineer import reengineer_video
 
+
 @app.get("/")
 async def root(request: Request):
     """
@@ -26,8 +27,11 @@ async def root(request: Request):
     """
     return templates.TemplateResponse("index.html", {"request": request})
 
+
 @app.post("/")
-async def analyze_with_video(file: UploadFile = File(...), background_tasks: BackgroundTasks = None):
+async def analyze_with_video(
+    file: UploadFile = File(...), background_tasks: BackgroundTasks = None
+):
     """
     UI endpoint: Phân tích + Tạo video có overlay.
     Trả về video để download.
@@ -45,16 +49,18 @@ async def analyze_with_video(file: UploadFile = File(...), background_tasks: Bac
 
         # Phân tích (lưu vào output/)
         master_json = os.path.join(output_dir, "master_data.json")
-        result = analyze_video_fast(video_path, production=True, output_file=master_json, output_base="output")
-        
+        result = analyze_video_fast(
+            video_path, production=True, output_file=master_json, output_base="output"
+        )
+
         # Tạo video có overlay
         output_video = os.path.join(output_dir, "analyzed_video.mp4")
         reengineer_video(master_json, video_path, output_video, production=True)
-        
+
         # Cleanup video gốc
-        if os.path.exists(video_path): 
+        if os.path.exists(video_path):
             os.remove(video_path)
-        
+
         # Schedule cleanup after response
         def cleanup():
             try:
@@ -62,23 +68,22 @@ async def analyze_with_video(file: UploadFile = File(...), background_tasks: Bac
                     shutil.rmtree(output_dir, ignore_errors=True)
             except:
                 pass
-        
+
         if background_tasks:
             background_tasks.add_task(cleanup)
-        
+
         # Trả về video file
         return FileResponse(
-            output_video, 
-            media_type="video/mp4",
-            filename=f"golf_analysis_{job_id}.mp4"
+            output_video, media_type="video/mp4", filename=f"golf_analysis_{job_id}.mp4"
         )
 
     except Exception as e:
-        if os.path.exists(video_path): 
+        if os.path.exists(video_path):
             os.remove(video_path)
         if os.path.exists(output_dir):
             shutil.rmtree(output_dir, ignore_errors=True)
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.post("/api/analyze")
 async def api_analyze(file: UploadFile = File(...)):
@@ -97,22 +102,26 @@ async def api_analyze(file: UploadFile = File(...)):
 
         # Gọi optimized pipeline (KHÔNG tạo video)
         result = analyze_video_fast(video_path, production=True)
-        
+
         # Cleanup
-        if os.path.exists(video_path): 
+        if os.path.exists(video_path):
             os.remove(video_path)
-        
+
         return result
 
     except Exception as e:
-        if os.path.exists(video_path): 
+        if os.path.exists(video_path):
             os.remove(video_path)
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/api/health")
+
+# Check health
+@app.get("/api/health")
 async def health_check():
     return {"status": "ok"}
 
+
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=7860)
