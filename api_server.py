@@ -109,6 +109,10 @@ async def api_analyze(file: UploadFile = File(...)):
             os.remove(video_path)
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/api/health")
+async def health_check():
+    return {"status": "ok"}
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=7860)
